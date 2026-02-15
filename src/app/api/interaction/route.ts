@@ -55,13 +55,16 @@ export async function POST(req: Request) {
     // 3. Broadcast FAST - Prioritize Billboard latency
     const io = (global as any).io;
     if (io) {
-      io.to(`screen:${screen_id}`).emit("color_splash", {
+      const splashData = {
         color,
         userName: userName || "Anonymous",
         brandName: activeCampaign?.brand?.name || "Holi Celebration",
         timestamp: new Date().toISOString(),
         screenName: screen.name,
-      });
+      };
+
+      io.to(`screen:${screen_id}`).emit("color_splash", splashData);
+      io.to("admin").emit("color_splash", splashData);
     }
 
     // 4. Persist & Rate Limit in background - No need to await for mobile response

@@ -68,7 +68,13 @@ export default function BillboardPage() {
     };
   }, [screenId]);
 
-  const mobileUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/throw/${screenId}`;
+  const [mounted, setMounted] = useState(false);
+  const [mobileUrl, setMobileUrl] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+    setMobileUrl(`${window.location.origin}/throw/${screenId}`);
+  }, [screenId]);
 
   return (
     <div className="relative w-full h-screen bg-[#FDFDFD] overflow-hidden flex flex-col items-center justify-center">
@@ -182,7 +188,8 @@ export default function BillboardPage() {
       {/* BOTTOM RIGHT: QR Code */}
       <div className="absolute bottom-10 right-10 z-20 flex flex-col items-end gap-4">
         <div className="bg-white p-5 rounded-[40px] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.15)] border border-white origin-bottom-right transition-transform hover:scale-105 duration-500">
-          <QRCodeSVG value={mobileUrl} size={110} />
+          {mounted && mobileUrl && <QRCodeSVG value={mobileUrl} size={110} />}
+          {!mounted && <div className="w-[110px] h-[110px] bg-zinc-50 animate-pulse rounded-lg" />}
         </div>
       </div>
 
