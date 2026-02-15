@@ -40,11 +40,14 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/server.ts ./server.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
-# If you're using a custom server, you need to copy it too and run it with ts-node
-RUN npm install -g ts-node typescript
+# If you're using a custom server, we use the start script from package.json
+# which uses 'tsx' to handle TypeScript and ESM compatibility correctly.
 
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["ts-node", "server.ts"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["npm", "start"]
