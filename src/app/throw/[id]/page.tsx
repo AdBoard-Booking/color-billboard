@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import posthog from "posthog-js";
 
 const COLORS = [
   { name: "Gulal Red", hex: "#E63946" },
@@ -30,10 +31,18 @@ export default function MobileThrowPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (showNameModal) {
+      posthog.capture('name_prompt_viewed');
+    }
+  }, [showNameModal]);
+
   const saveName = (e: React.FormEvent) => {
     e.preventDefault();
     if (userName.trim()) {
       localStorage.setItem("user_name", userName);
+      posthog.identify(userName);
+      posthog.capture('name_submitted', { name: userName });
       setShowNameModal(false);
     }
   };
@@ -68,13 +77,29 @@ export default function MobileThrowPage() {
       if (res.ok) {
         setStatus("success");
         setReward(data.reward);
+        posthog.capture('color_splashed', {
+          screen_id: screenId,
+          color: selectedColor,
+          user_name: userName,
+          reward_type: data.reward?.message
+        });
       } else {
         setStatus("error");
-        setMessage(data.error || "Failed to throw color");
+        const errorMsg = data.error || "Failed to throw color";
+        setMessage(errorMsg);
+        posthog.capture('splash_error', {
+          error: errorMsg,
+          screen_id: screenId,
+          color: selectedColor
+        });
       }
     } catch (err) {
       setStatus("error");
       setMessage("Connection error. Try again.");
+      posthog.capture('splash_error', {
+        error: 'connection_error',
+        screen_id: screenId
+      });
     }
   };
 
@@ -110,7 +135,10 @@ export default function MobileThrowPage() {
           {COLORS.map((c) => (
             <button
               key={c.hex}
-              onClick={() => setSelectedColor(c.hex)}
+              onClick={() => {
+                setSelectedColor(c.hex);
+                posthog.capture('color_selection_changed', { color: c.name, hex: c.hex });
+              }}
               className={`relative overflow-hidden h-28 rounded-[28px] transition-all duration-300 group flex flex-col items-center justify-center gap-2 ${selectedColor === c.hex
                 ? "bg-white shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border-white scale-105 z-10"
                 : "bg-zinc-50 border-transparent hover:bg-zinc-100"
@@ -245,7 +273,10 @@ export default function MobileThrowPage() {
             </div>
 
             <button
-              onClick={() => setStatus("idle")}
+              onClick={() => {
+                setStatus("idle");
+                posthog.capture('throw_again_clicked');
+              }}
               className="w-full py-6 rounded-[32px] bg-white text-[#0060FF] font-black text-xl shadow-2xl active:scale-95 transition-all mb-4"
             >
               THROW AGAIN
