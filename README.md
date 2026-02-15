@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Holi OOH Interactive Platform
+
+A production-ready platform for real-time digital billboard interactions during Holi.
+
+## Tech Stack
+- **Frontend/Backend**: Next.js (App Router) + Socket.IO
+- **Real-time**: Custom HTTP Server with Websockets
+- **Database**: PostgreSQL (Prisma ORM)
+- **Cache**: Redis (Rate limiting)
+- **Styling**: Tailwind CSS + Framer Motion
+
+## Project Structure
+- `src/app/api/interaction`: Backend logic for processing "throws"
+- `src/app/throw/[id]`: Mobile web experience (QR destination)
+- `src/app/billboard/[id]`: Billboard display application
+- `src/app/admin`: Admin dashboard for brands & publishers
+- `server.ts`: Custom Next.js server with Socket.IO integration
 
 ## Getting Started
 
-First, run the development server:
+### 1. Prerequisites
+- Node.js 20+
+- PostgreSQL
+- Redis
 
+### 2. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Setup Environment
+Create a `.env` file (see `.env.example` or use the provided one) and configure:
+- `DATABASE_URL`
+- `REDIS_URL`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Database Setup & Seeding
+```bash
+# Generate Prisma Client
+npx prisma generate
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Create tables (ensure DB is running)
+npx prisma db push
 
-## Learn More
+# Seed data for demo
+npm run seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Running the Application
+```bash
+# Start the custom server (handles Next.js + Socket.IO)
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Demo Access
+- **Mobile Throw**: `http://localhost:3000/throw/screen_1`
+- **Billboard**: `http://localhost:3000/billboard/screen_1`
+- **Admin**: `http://localhost:3000/admin` (admin@holi-ooh.com / admin123)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Non-Functional Features
+- **Rate Limiting**: 1 interaction per 10 mins per device (using Redis)
+- **Real-time**: Sub-100ms latency for color splash broadcasting
+- **Persistence**: All interactions logged for brand attribution reports

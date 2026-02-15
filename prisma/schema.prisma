@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(BRAND_MANAGER)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  SUPER_ADMIN
+  BRAND_MANAGER
+  PUBLISHER
+}
+
+model Publisher {
+  id        String   @id @default(uuid())
+  name      String
+  screens   Screen[]
+  createdAt DateTime @default(now())
+}
+
+model Screen {
+  id              String             @id @default(uuid())
+  name            String
+  location        String?
+  publisherId     String
+  publisher       Publisher          @relation(fields: [publisherId], references: [id])
+  interactions    InteractionEvent[]
+  activeCampaigns Campaign[]
+  createdAt       DateTime           @default(now())
+}
+
+model Brand {
+  id         String      @id @default(uuid())
+  name       String
+  logoUrl    String?
+  campaigns  Campaign[]
+  brandSlots BrandSlot[]
+  createdAt  DateTime    @default(now())
+}
+
+model Campaign {
+  id           String             @id @default(uuid())
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+  brandId      String
+  brand        Brand              @relation(fields: [brandId], references: [id])
+  screenId     String
+  screen       Screen             @relation(fields: [screenId], references: [id])
+  brandSlots   BrandSlot[]
+  interactions InteractionEvent[]
+}
+
+model BrandSlot {
+  id          String   @id @default(uuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+  brandId     String
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  duration    Int      @default(15) // seconds
+  creativeUrl String? // Video or Image for intro/outro
+  hexColors   String[] // Sponsored colors list
+}
+
+model InteractionEvent {
+  id         String    @id @default(uuid())
+  screenId   String
+  screen     Screen    @relation(fields: [screenId], references: [id])
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+  color      String // Hex or Name
+  deviceHash String // Fingerprint for rate-limiting
+  timestamp  DateTime  @default(now())
+}
