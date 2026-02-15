@@ -4,7 +4,7 @@ import redis from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
-    const { screen_id, color, fingerprint, userName } = await req.json();
+    const { screen_id, color, fingerprint, userName, isBonus } = await req.json();
 
     if (!screen_id || !color || !fingerprint) {
       return NextResponse.json(
@@ -13,15 +13,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Rate Limiting (1 interaction per 10 minutes per fingerprint) - Optional
+    // 1. Rate Limiting (1 interaction per 10 minutes per fingerprint)
+    // SKIP if it's a bonus throw unlocked by sharing
     try {
-      if (redis.status === "ready") {
+      if (redis.status === "ready" && !isBonus) {
         const rateLimitKey = `ratelimit:${fingerprint}`;
         const lastInteraction = await redis.get(rateLimitKey);
 
         if (lastInteraction) {
           return NextResponse.json(
-            { error: "Slow down! You can throw again in 10 minutes." },
+            { error: "Slow down! You can throw again in 10 minutes or share to unlock a bonus throw!" },
             { status: 429 }
           );
         }
