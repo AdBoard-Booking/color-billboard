@@ -9,6 +9,7 @@ export async function GET() {
       totalBrands,
       activeCampaigns,
       recentInteractions,
+      recentCampaigns,
     ] = await Promise.all([
       prisma.interactionEvent.count(),
       prisma.screen.count(),
@@ -29,6 +30,13 @@ export async function GET() {
               brand: true,
             }
           },
+        },
+      }),
+      prisma.campaign.findMany({
+        take: 5,
+        orderBy: { startDate: "desc" },
+        include: {
+          brand: true,
         },
       }),
     ]);
@@ -64,6 +72,7 @@ export async function GET() {
       totalBrands,
       activeCampaigns,
       recentInteractions,
+      recentCampaigns,
       screenStats,
     });
   } catch (error) {
