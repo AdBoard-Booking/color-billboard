@@ -120,7 +120,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Note: In a real app, you might want to handle dependent records (campaigns, interactions)
+    // Note: In a real app, you might want to handle dependent records (interactions)
     // For now, we'll perform a direct delete.
 
 
@@ -131,7 +131,7 @@ export async function DELETE(
   } catch (error) {
     console.error("Error deleting screen:", error);
     return NextResponse.json(
-      { error: "Failed to delete screen. Ensure there are no active campaigns or interactions linked to it." },
+      { error: "Failed to delete screen. Ensure there are no active interactions linked to it." },
       { status: 500 }
     );
   }

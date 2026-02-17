@@ -58,7 +58,6 @@ export async function POST(req: Request) {
         interactionId: interaction.id,
         color,
         userName: userName || "Anonymous",
-        brandName: "Holi Celebration",
         timestamp: new Date().toISOString(),
         screenName: screen.name,
       };

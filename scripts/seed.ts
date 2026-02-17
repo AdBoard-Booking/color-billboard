@@ -28,45 +28,7 @@ async function main() {
     },
   });
 
-  // 3. Create Brand
-  const brand = await prisma.brand.upsert({
-    where: { id: "brand_1" },
-    update: {},
-    create: {
-      id: "brand_1",
-      name: "Uber Holi",
-      logoUrl: "https://example.com/uber.png",
-    },
-  });
-
-  // 4. Create Campaign
-  const campaign = await prisma.campaign.upsert({
-    where: { id: "camp_1" },
-    update: {},
-    create: {
-      id: "camp_1",
-      name: "Holi Splash 2026",
-      startDate: new Date("2026-01-01"),
-      endDate: new Date("2026-12-31"),
-      brandId: brand.id,
-      screenId: screen.id,
-    },
-  });
-
-  // 5. Create Brand Slot
-  await prisma.brandSlot.upsert({
-    where: { id: "slot_1" },
-    update: {},
-    create: {
-      id: "slot_1",
-      campaignId: campaign.id,
-      brandId: brand.id,
-      duration: 15,
-      hexColors: ["#E63946", "#F4A261", "#457B9D"],
-    },
-  });
-
-  // 6. Create Admin User
+  // 3. Create Admin User
   const hashedPassword = await bcrypt.hash("admin123", 10);
   await prisma.user.upsert({
     where: { email: "admin@holi-ooh.com" },

@@ -151,7 +151,7 @@ export default function Home() {
                   JOIN THE WORLD'S <br /><span className="text-[#0060FF]">COLORFUL REVOLUTION.</span>
                 </h2>
                 <p className="text-zinc-400 text-lg">
-                  We're scaling interactive experiences globally. Partner with us to bring the Holi Billboard to your city or brand.
+                  We're scaling interactive experiences globally. Partner with us to bring the Holi Billboard to your city.
                 </p>
               </div>
               <button

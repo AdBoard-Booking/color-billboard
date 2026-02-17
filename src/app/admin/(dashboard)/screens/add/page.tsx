@@ -192,7 +192,7 @@ export default function AddScreenPage() {
               </div>
             </div>
             <p className="text-[10px] text-zinc-400 mt-6 font-medium leading-relaxed italic">
-              Once deployed, this screen will be available for color-throws and active campaigns.
+              Once deployed, this screen will be available for color-throws.
             </p>
           </div>
 
