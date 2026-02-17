@@ -5,8 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Monitor,
-  Target,
-  Users,
+  Building2,
   Layers,
   Activity,
   Sparkles,
@@ -20,8 +19,7 @@ export function Sidebar() {
   const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin/dashboard" },
     { icon: Monitor, label: "Screens", href: "/admin/screens" },
-    { icon: Target, label: "Campaigns", href: "/admin/campaigns" },
-    { icon: Users, label: "Brands", href: "/admin/brands" },
+    { icon: Building2, label: "Publishers", href: "/admin/publishers" },
   ];
 
   return (

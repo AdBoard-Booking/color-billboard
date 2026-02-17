@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart3,
   Monitor,
-  Target,
   Users,
   TrendingUp,
   Clock,
@@ -28,25 +27,19 @@ interface Interaction {
   userName?: string;
   timestamp: string;
   screen?: { name: string };
-  campaign?: { brand: { name: string } };
-}
-
-interface Campaign {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  brand: { name: string; logoUrl?: string };
 }
 
 interface Stats {
   totalInteractions: number;
   totalScreens: number;
-  totalBrands: number;
-  activeCampaigns: number;
+  totalPublishers: number;
   recentInteractions: Interaction[];
-  recentCampaigns: Campaign[];
   screenStats: { name: string, count: number }[];
+  avgLag: number | null;
+  missedRate: number;
+  missedCount: number;
+  clickedCount: number;
+  displayedCount: number;
 }
 
 function StatCard({ label, value, icon: Icon, trend, color }: {
@@ -96,8 +89,7 @@ export default function AdminDashboard() {
         color: data.color,
         userName: data.userName,
         timestamp: new Date().toISOString(),
-        screen: { name: data.screenName },
-        campaign: { brand: { name: data.brandName } }
+        screen: { name: data.screenName }
       };
 
       setLiveInteractions(prev => [newInteraction, ...prev].slice(0, 5));
@@ -160,12 +152,10 @@ export default function AdminDashboard() {
             <Bell size={22} className="text-zinc-400" />
             <span className="absolute top-4 right-4 w-2 h-2 bg-[#0060FF] rounded-full border-2 border-white" />
           </button>
-          <Link href="/admin/campaigns">
-            <button className="h-14 px-8 bg-zinc-900 text-white rounded-2xl flex items-center gap-3 font-bold hover:bg-zinc-800 transition-colors shadow-xl shadow-zinc-900/10">
-              <Plus size={20} />
-              New Campaign
-            </button>
-          </Link>
+          <button className="h-14 px-8 bg-zinc-900 text-white rounded-2xl flex items-center gap-3 font-bold hover:bg-zinc-800 transition-colors shadow-xl shadow-zinc-900/10 active:scale-95">
+            <Plus size={20} />
+            Quick Action
+          </button>
         </div>
       </header>
 
@@ -186,19 +176,56 @@ export default function AdminDashboard() {
           color="bg-emerald-50"
         />
         <StatCard
-          label="Live Campaigns"
-          value={stats.activeCampaigns}
-          icon={Target}
-          trend="Ongoing"
+          label="Media Publishers"
+          value={stats.totalPublishers}
+          icon={LayoutDashboard}
+          trend="Partners"
           color="bg-orange-50"
         />
-        <StatCard
-          label="Brand Partners"
-          value={stats.totalBrands}
-          icon={Users}
-          trend="Trusted"
-          color="bg-purple-50"
-        />
+        <div className="bg-white border border-zinc-100 p-8 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-500 group">
+          <div className="flex justify-between items-start mb-6">
+            <div className="p-4 rounded-2xl bg-zinc-50 group-hover:scale-110 transition-transform duration-500">
+              <Clock size={24} className="text-zinc-900" />
+            </div>
+            <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${stats.missedRate !== null && stats.missedRate !== undefined
+              ? stats.missedRate === 0
+                ? 'bg-green-50 text-green-600 border border-green-100'
+                : stats.missedRate < 5
+                  ? 'bg-yellow-50 text-yellow-600 border border-yellow-100'
+                  : 'bg-red-50 text-red-600 border border-red-100'
+              : 'bg-zinc-50 border border-zinc-100 text-zinc-500'
+              }`}>
+              {stats.missedRate !== null && stats.missedRate !== undefined
+                ? stats.missedRate === 0
+                  ? 'Perfect'
+                  : stats.missedRate < 5
+                    ? 'Good'
+                    : 'Alert'
+                : 'N/A'}
+            </span>
+          </div>
+          <div>
+            <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Avg Latency</p>
+            <h3 className="text-3xl font-black text-zinc-900 tracking-tighter">
+              {stats.avgLag !== null && stats.avgLag !== undefined
+                ? `${(stats.avgLag / 1000).toFixed(2)}s`
+                : 'N/A'}
+            </h3>
+            <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-3 mb-1">Missed Rate</p>
+            <h3 className={`text-xl font-black tracking-tighter ${stats.missedRate !== null && stats.missedRate !== undefined
+              ? stats.missedRate === 0
+                ? 'text-green-600'
+                : stats.missedRate < 5
+                  ? 'text-yellow-600'
+                  : 'text-red-600'
+              : 'text-zinc-900'
+              }`}>
+              {stats.missedRate !== null && stats.missedRate !== undefined
+                ? `${stats.missedRate.toFixed(1)}%`
+                : 'N/A'}
+            </h3>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -291,62 +318,30 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Campaign Summary Table */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-black tracking-tight text-zinc-900">Recent Campaigns</h3>
-              <Link href="/admin/campaigns">
-                <button className="text-[10px] font-bold text-zinc-400 hover:text-zinc-900 transition-colors uppercase tracking-widest border-b border-transparent hover:border-zinc-900">View All</button>
-              </Link>
-            </div>
-
-            <div className="bg-white border border-zinc-100 rounded-[40px] overflow-hidden shadow-sm">
-              <table className="w-full text-left">
-                <thead className="bg-zinc-50/50 border-b border-zinc-100 text-zinc-400 text-[10px] uppercase font-bold tracking-widest">
-                  <tr>
-                    <th className="px-10 py-5">Brand & Campaign</th>
-                    <th className="px-10 py-5">Status</th>
-                    <th className="px-10 py-5 text-right">Settings</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-50">
-                  {stats.recentCampaigns.length > 0 ? (
-                    stats.recentCampaigns.map((campaign) => (
-                      <tr key={campaign.id} className="group hover:bg-zinc-50/50 transition-colors">
-                        <td className="px-10 py-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center font-black text-zinc-300 text-xl">
-                              {campaign.brand.name.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-extrabold text-zinc-900 text-base tracking-tight">{campaign.name}</p>
-                              <p className="text-xs text-zinc-400 font-medium">{campaign.brand.name}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-10 py-6">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-widest">
-                            Live
-                          </span>
-                        </td>
-                        <td className="px-10 py-6 text-right">
-                          <Link href="/admin/campaigns">
-                            <button className="text-zinc-300 hover:text-zinc-900 transition-colors p-2">
-                              <BarChart3 size={20} />
-                            </button>
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="px-10 py-20 text-center">
-                        <p className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">No recent campaigns found</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          <div className="bg-white border border-zinc-100 p-10 rounded-[40px] shadow-sm">
+            <h3 className="text-2xl font-black text-zinc-900 mb-6 tracking-tight">System Status</h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl">
+                <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Main Server</span>
+                <span className="text-green-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  Operational
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl">
+                <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">WebSocket Node</span>
+                <span className="text-green-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  Connected
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl">
+                <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Database Cluster</span>
+                <span className="text-green-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  Healthy
+                </span>
+              </div>
             </div>
           </div>
         </div>

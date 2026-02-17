@@ -4,7 +4,7 @@ import redis from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
-    const { screen_id, color, fingerprint, userName, isBonus } = await req.json();
+    const { screen_id, color, fingerprint, userName, isBonus, clickedAt } = await req.json();
 
     if (!screen_id || !color || !fingerprint) {
       return NextResponse.json(
@@ -31,35 +31,34 @@ export async function POST(req: Request) {
       console.warn("Redis rate limiting skipped due to connection issue.");
     }
 
-    // 2. Find Screen and active campaign
+    // 2. Find Screen
     const screen = await prisma.screen.findUnique({
       where: { id: screen_id },
-      include: {
-        activeCampaigns: {
-          where: {
-            startDate: { lte: new Date() },
-            endDate: { gte: new Date() },
-          },
-          include: {
-            brand: true,
-          }
-        },
-      },
     });
 
     if (!screen) {
       return NextResponse.json({ error: "Screen not found" }, { status: 404 });
     }
 
-    const activeCampaign = screen.activeCampaigns[0];
+    // 3. Create Interaction Event First (to get ID for tracking)
+    const interaction = await prisma.interactionEvent.create({
+      data: {
+        screenId: screen_id,
+        color,
+        userName,
+        deviceHash: fingerprint,
+        clickedAt: clickedAt ? new Date(clickedAt) : new Date(),
+      },
+    });
 
-    // 3. Broadcast FAST - Prioritize Billboard latency
+    // 4. Broadcast FAST with Interaction ID - Prioritize Billboard latency
     const io = (global as any).io;
     if (io) {
       const splashData = {
+        interactionId: interaction.id,
         color,
         userName: userName || "Anonymous",
-        brandName: activeCampaign?.brand?.name || "Holi Celebration",
+        brandName: "Holi Celebration",
         timestamp: new Date().toISOString(),
         screenName: screen.name,
       };
@@ -68,23 +67,14 @@ export async function POST(req: Request) {
       io.to("admin").emit("color_splash", splashData);
     }
 
-    // 4. Persist & Rate Limit in background - No need to await for mobile response
+    // 5. Rate Limit in background - No need to await for mobile response
     (async () => {
       try {
-        await prisma.interactionEvent.create({
-          data: {
-            screenId: screen_id,
-            campaignId: activeCampaign?.id,
-            color,
-            deviceHash: fingerprint,
-          },
-        });
-
         if (redis.status === "ready") {
           await redis.set(`ratelimit:${fingerprint}`, Date.now(), "EX", 600);
         }
       } catch (err) {
-        console.error("Background persistence error:", err);
+        console.error("Background rate limit error:", err);
       }
     })();
 
@@ -92,8 +82,8 @@ export async function POST(req: Request) {
       success: true,
       message: "Color thrown successfully!",
       reward: {
-        message: activeCampaign ? `Thanks from ${activeCampaign.brand.name}!` : "Happy Holi!",
-        coupon: activeCampaign ? "HOLI2026" : null,
+        message: "Happy Holi!",
+        coupon: null,
       },
     });
   } catch (error) {

@@ -71,6 +71,8 @@ export default function MobileThrowPage() {
     }
 
     try {
+      const clickedAt = new Date().toISOString();
+
       const res = await fetch("/api/interaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,6 +82,7 @@ export default function MobileThrowPage() {
           fingerprint,
           userName: userName,
           isBonus: hasShared,
+          clickedAt,
         }),
       });
 

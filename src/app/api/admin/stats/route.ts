@@ -6,37 +6,19 @@ export async function GET() {
     const [
       totalInteractions,
       totalScreens,
-      totalBrands,
-      activeCampaigns,
+      totalPublishers,
       recentInteractions,
-      recentCampaigns,
     ] = await Promise.all([
       prisma.interactionEvent.count(),
       prisma.screen.count(),
-      prisma.brand.count(),
-      prisma.campaign.count({
-        where: {
-          startDate: { lte: new Date() },
-          endDate: { gte: new Date() },
-        },
-      }),
+      prisma.publisher.count(),
       prisma.interactionEvent.findMany({
-        take: 10,
+        take: 20,
         orderBy: { timestamp: "desc" },
         include: {
-          screen: true,
-          campaign: {
-            include: {
-              brand: true,
-            }
+          screen: {
+            select: { name: true }
           },
-        },
-      }),
-      prisma.campaign.findMany({
-        take: 5,
-        orderBy: { startDate: "desc" },
-        include: {
-          brand: true,
         },
       }),
     ]);
@@ -66,14 +48,53 @@ export async function GET() {
       count: s._count.id,
     }));
 
+    // Calculate global timing metrics
+    const interactionsWithTiming = await prisma.interactionEvent.findMany({
+      where: {
+        clickedAt: { not: null },
+        displayedAt: { not: null },
+      },
+      select: {
+        clickedAt: true,
+        displayedAt: true,
+      },
+    });
+
+    let avgLag = null;
+    if (interactionsWithTiming.length > 0) {
+      const totalLag = interactionsWithTiming.reduce((sum, event) => {
+        const lag = new Date(event.displayedAt!).getTime() - new Date(event.clickedAt!).getTime();
+        return sum + lag;
+      }, 0);
+      avgLag = Math.round(totalLag / interactionsWithTiming.length);
+    }
+
+    // Calculate global missed rate
+    const clickedCount = await prisma.interactionEvent.count({
+      where: { clickedAt: { not: null } },
+    });
+
+    const displayedCount = await prisma.interactionEvent.count({
+      where: {
+        clickedAt: { not: null },
+        displayedAt: { not: null },
+      },
+    });
+
+    const missedCount = clickedCount - displayedCount;
+    const missedRate = clickedCount > 0 ? (missedCount / clickedCount) * 100 : 0;
+
     return NextResponse.json({
       totalInteractions,
       totalScreens,
-      totalBrands,
-      activeCampaigns,
+      totalPublishers,
       recentInteractions,
-      recentCampaigns,
       screenStats,
+      avgLag, // in milliseconds
+      missedRate, // percentage
+      missedCount,
+      clickedCount,
+      displayedCount,
     });
   } catch (error) {
     console.error("Dashboard stats error:", error);
