@@ -24,6 +24,7 @@ export default function BillboardPage() {
   const { id: screenId } = useParams();
   const [splashes, setSplashes] = useState<SplashBlob[]>([]);
   const [overlay, setOverlay] = useState<{ name: string; color: string } | null>(null);
+  const [publisherName, setPublisherName] = useState("City Media");
   const socketRef = useRef<Socket | null>(null);
   const lastInteractionRef = useRef<number>(Date.now());
 
@@ -133,6 +134,18 @@ export default function BillboardPage() {
   useEffect(() => {
     setMounted(true);
     setMobileUrl(`${window.location.origin}/throw/${screenId}`);
+
+    // Fetch screen/publisher details
+    if (screenId) {
+      fetch(`/api/admin/screens/${screenId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.publisher?.name) {
+            setPublisherName(data.publisher.name);
+          }
+        })
+        .catch((err) => console.error("Error fetching screen details:", err));
+    }
   }, [screenId]);
 
   return (
@@ -220,7 +233,7 @@ export default function BillboardPage() {
       <div className="absolute top-8 left-10 z-30 flex gap-8 items-center bg-white/40 backdrop-blur-md p-6 rounded-[32px] border border-white/20">
         <div className="flex flex-col">
           <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Publisher</span>
-          <span className="text-zinc-900 font-extrabold text-base tracking-tight leading-none">City Media</span>
+          <span className="text-zinc-900 font-extrabold text-base tracking-tight leading-none">{publisherName}</span>
         </div>
       </div>
 
@@ -235,8 +248,8 @@ export default function BillboardPage() {
       <div className="relative z-10 text-center pointer-events-none px-4 max-w-4xl select-none flex flex-col items-center">
 
         <h1 className="text-[8vw] font-[900] text-zinc-900 leading-[1] tracking-tighter opacity-[0.9] mix-blend-multiply">
-          Paint your<br />
-          <span className="holi-gradient-text">Perspective</span>
+          Do me a favor,<br />
+          Lets play <span className="holi-gradient-text">HOLI</span>
         </h1>
       </div>
 
