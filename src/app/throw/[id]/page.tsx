@@ -231,26 +231,7 @@ export default function MobileThrowPage() {
               <h1 className="text-4xl font-[900] tracking-tighter italic leading-none mb-3">YOU JUST MADE<br /><span className="text-[#0060FF]">THE CITY COLORFUL.</span></h1>
               <p className="text-zinc-500 text-sm font-medium mb-8">Not a filter. A real billboard. Few people get this moment.</p>
 
-              {/* Leaderboard */}
-              <div className="w-full bg-white/5 border border-white/10 rounded-[32px] p-6 mb-8 text-left">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#0060FF] mb-4">City Color Trends</h4>
-                <div className="space-y-3">
-                  {leaderboard.map((item: any) => (
-                    <div key={item.name} className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
-                        <span>{item.name}</span>
-                        <span>{item.count}%</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ backgroundColor: item.color, width: `${item.count}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {COLORS.find(c => c.hex === selectedColor)?.name.includes("Red") && (
-                  <p className="mt-4 text-[10px] text-zinc-400 font-medium italic">🔥 You contributed to the leading flavor!</p>
-                )}
-              </div>
+
 
               {/* Reward */}
               <div className="w-full bg-white text-zinc-950 p-6 rounded-[32px] mb-8">
