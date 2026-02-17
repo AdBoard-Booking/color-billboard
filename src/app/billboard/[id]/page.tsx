@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { SPLASH_DURATION_MS, OVERLAY_DURATION_MS, DUMMY_SPLASH_INTERVAL_MS, IDLE_TIME_BEFORE_DUMMY_MS } from "@/lib/constants";
+import { SPLASH_DURATION_MS, OVERLAY_DURATION_MS, DUMMY_SPLASH_INTERVAL_MS, IDLE_TIME_BEFORE_DUMMY_MS, SPLASH_SVGS } from "@/lib/constants";
 
 
 interface SplashBlob {
@@ -15,7 +15,9 @@ interface SplashBlob {
   x: number;
   y: number;
   size: number;
-  blobs: { offsetX: number; offsetY: number; size: number }[];
+  svgPath: string;
+  rotation: number;
+  opacity: number;
 }
 
 export default function BillboardPage() {
@@ -29,13 +31,8 @@ export default function BillboardPage() {
     const centerX = Math.random() * 80 + 10;
     const centerY = Math.random() * 60 + 20;
     const splashId = Math.random().toString(36).substr(2, 9);
-
-    // Generate 5-8 smaller blobs around the center to simulate a splash
-    const blobs = Array.from({ length: Math.floor(Math.random() * 4) + 4 }).map(() => ({
-      offsetX: (Math.random() - 0.5) * 80,
-      offsetY: (Math.random() - 0.5) * 80,
-      size: Math.random() * 100 + 50,
-    }));
+    const svgPath = SPLASH_SVGS[Math.floor(Math.random() * SPLASH_SVGS.length)];
+    const rotation = Math.random() * 360;
 
     const newSplash: SplashBlob = {
       id: splashId,
@@ -43,8 +40,10 @@ export default function BillboardPage() {
       userName: data.userName,
       x: centerX,
       y: centerY,
-      size: Math.random() * 100 + 300,
-      blobs,
+      size: Math.random() * 120 + 240,
+      svgPath,
+      rotation,
+      opacity: Math.random() * 0.3 + 0.6, // 0.6 to 0.9 opacity
     };
 
     setSplashes((prev) => [...prev, newSplash]);
@@ -92,12 +91,8 @@ export default function BillboardPage() {
           const splashId = Math.random().toString(36).substr(2, 9);
           const color = dummyColors[Math.floor(Math.random() * dummyColors.length)];
           const userName = dummyNames[Math.floor(Math.random() * dummyNames.length)];
-
-          const blobs = Array.from({ length: Math.floor(Math.random() * 4) + 4 }).map(() => ({
-            offsetX: (Math.random() - 0.5) * 80,
-            offsetY: (Math.random() - 0.5) * 80,
-            size: Math.random() * 100 + 50,
-          }));
+          const svgPath = SPLASH_SVGS[Math.floor(Math.random() * SPLASH_SVGS.length)];
+          const rotation = Math.random() * 360;
 
           const newSplash: SplashBlob = {
             id: splashId,
@@ -105,8 +100,10 @@ export default function BillboardPage() {
             userName,
             x: centerX,
             y: centerY,
-            size: Math.random() * 100 + 300,
-            blobs,
+            size: Math.random() * 120 + 240,
+            svgPath,
+            rotation,
+            opacity: Math.random() * 0.3 + 0.6,
           };
 
           // AUTO-REMOVE after set duration
@@ -162,16 +159,43 @@ export default function BillboardPage() {
                 width: 1, height: 1
               }}
             >
-              {/* Main Core */}
+              {/* Watercolor SVG Splash */}
               <div
-                className="absolute rounded-full"
+                className="absolute"
                 style={{
-                  backgroundColor: splash.color,
                   width: `${splash.size}px`,
                   height: `${splash.size}px`,
-                  filter: "blur(25px)",
-                  opacity: 0.5,
-                  transform: "translate(-50%, -50%)"
+                  background: `radial-gradient(circle at center, ${splash.color}, ${splash.color}cc 60%, ${splash.color}99 100%)`,
+                  maskImage: `url(${splash.svgPath})`,
+                  maskRepeat: "no-repeat",
+                  maskSize: "contain",
+                  WebkitMaskImage: `url(${splash.svgPath})`,
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskSize: "contain",
+                  opacity: splash.opacity,
+                  filter: "blur(2px)",
+                  transform: `translate(-50%, -50%) rotate(${splash.rotation}deg)`,
+                  mixBlendMode: "multiply"
+                }}
+              />
+
+              {/* Extra layer for more depth (watercolor feel) - Outer Bleed */}
+              <div
+                className="absolute"
+                style={{
+                  width: `${splash.size * 1.1}px`,
+                  height: `${splash.size * 1.1}px`,
+                  backgroundColor: splash.color,
+                  maskImage: `url(${splash.svgPath})`,
+                  maskRepeat: "no-repeat",
+                  maskSize: "contain",
+                  WebkitMaskImage: `url(${splash.svgPath})`,
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskSize: "contain",
+                  opacity: splash.opacity * 0.3,
+                  filter: "blur(12px)",
+                  transform: `translate(-50%, -50%) rotate(${splash.rotation + 10}deg)`,
+                  mixBlendMode: "multiply"
                 }}
               />
 
@@ -187,23 +211,6 @@ export default function BillboardPage() {
                   </span>
                 </div>
               </div>
-
-              {/* Splatter Droplets */}
-              {splash.blobs.map((blob, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 0.3, scale: 1, x: blob.offsetX, y: blob.offsetY }}
-                  className="absolute rounded-full"
-                  style={{
-                    backgroundColor: splash.color,
-                    width: `${blob.size}px`,
-                    height: `${blob.size}px`,
-                    filter: "blur(15px)",
-                    transform: "translate(-50%, -50%)"
-                  }}
-                />
-              ))}
             </motion.div>
           ))}
         </AnimatePresence>
