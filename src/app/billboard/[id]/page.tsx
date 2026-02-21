@@ -24,7 +24,7 @@ export default function BillboardPage() {
   const { id: screenId } = useParams();
   const [splashes, setSplashes] = useState<SplashBlob[]>([]);
   const [overlay, setOverlay] = useState<{ name: string; color: string } | null>(null);
-  const [publisherName, setPublisherName] = useState("City Media");
+  const [publisherName, setPublisherName] = useState("");
   const socketRef = useRef<Socket | null>(null);
   const lastInteractionRef = useRef<number>(Date.now());
 

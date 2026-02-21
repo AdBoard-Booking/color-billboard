@@ -7,64 +7,56 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const screen = await prisma.screen.findUnique({
-      where: { id },
-      include: {
-        publisher: true,
-        interactions: {
-          take: 50,
-          orderBy: { timestamp: "desc" },
+
+    // Run all independent queries in parallel
+    const [
+      screen,
+      interactionCount,
+      avgLagResult,
+      clickedAndDisplayed,
+    ] = await Promise.all([
+      prisma.screen.findUnique({
+        where: { id },
+        include: {
+          publisher: true,
+          interactions: {
+            take: 50,
+            orderBy: { timestamp: "desc" },
+          },
         },
-      },
-    });
+      }),
+      prisma.interactionEvent.count({ where: { screenId: id } }),
+      // Compute avg lag in Postgres – no row transfer
+      prisma.$queryRaw<{ avg_lag_ms: number | null }[]>`
+        SELECT AVG(
+          EXTRACT(EPOCH FROM ("displayedAt" - "clickedAt")) * 1000
+        ) AS avg_lag_ms
+        FROM "InteractionEvent"
+        WHERE "screenId" = ${id}
+          AND "clickedAt" IS NOT NULL
+          AND "displayedAt" IS NOT NULL
+      `,
+      // clicked + displayed counts in one pass
+      prisma.$queryRaw<{ clicked_count: bigint; displayed_count: bigint }[]>`
+        SELECT
+          COUNT(*) FILTER (WHERE "clickedAt" IS NOT NULL) AS clicked_count,
+          COUNT(*) FILTER (WHERE "clickedAt" IS NOT NULL AND "displayedAt" IS NOT NULL) AS displayed_count
+        FROM "InteractionEvent"
+        WHERE "screenId" = ${id}
+      `,
+    ]);
 
     if (!screen) {
       return NextResponse.json({ error: "Screen not found" }, { status: 404 });
     }
 
-    // Aggregate interaction count
-    const interactionCount = await prisma.interactionEvent.count({
-      where: { screenId: id },
-    });
+    const avgLag =
+      avgLagResult[0]?.avg_lag_ms != null
+        ? Math.round(Number(avgLagResult[0].avg_lag_ms))
+        : null;
 
-    // Calculate average lag
-    const interactionsWithTiming = await prisma.interactionEvent.findMany({
-      where: {
-        screenId: id,
-        clickedAt: { not: null },
-        displayedAt: { not: null },
-      },
-      select: {
-        clickedAt: true,
-        displayedAt: true,
-      },
-    });
-
-    let avgLag = null;
-    if (interactionsWithTiming.length > 0) {
-      const totalLag = interactionsWithTiming.reduce((sum, event) => {
-        const lag = new Date(event.displayedAt!).getTime() - new Date(event.clickedAt!).getTime();
-        return sum + lag;
-      }, 0);
-      avgLag = Math.round(totalLag / interactionsWithTiming.length);
-    }
-
-    // Calculate missed rate (clicked but not displayed)
-    const clickedCount = await prisma.interactionEvent.count({
-      where: {
-        screenId: id,
-        clickedAt: { not: null },
-      },
-    });
-
-    const displayedCount = await prisma.interactionEvent.count({
-      where: {
-        screenId: id,
-        clickedAt: { not: null },
-        displayedAt: { not: null },
-      },
-    });
-
+    const clickedCount = Number(clickedAndDisplayed[0]?.clicked_count ?? 0);
+    const displayedCount = Number(clickedAndDisplayed[0]?.displayed_count ?? 0);
     const missedCount = clickedCount - displayedCount;
     const missedRate = clickedCount > 0 ? (missedCount / clickedCount) * 100 : 0;
 

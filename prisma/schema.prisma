@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -39,6 +38,8 @@ model Screen {
   publisher    Publisher          @relation(fields: [publisherId], references: [id])
   interactions InteractionEvent[]
   createdAt    DateTime           @default(now())
+
+  @@index([publisherId])
 }
 
 model InteractionEvent {
@@ -51,4 +52,9 @@ model InteractionEvent {
   timestamp   DateTime  @default(now())
   clickedAt   DateTime? // When user clicked the splash button
   displayedAt DateTime? // When splash appeared on billboard screen
+
+  // Speeds up stats queries that filter/group by screenId + timing columns
+  @@index([screenId, clickedAt, displayedAt])
+  // Speeds up deviceHash lookups if rate-limiting ever falls back to DB
+  @@index([deviceHash])
 }

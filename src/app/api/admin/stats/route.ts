@@ -8,6 +8,10 @@ export async function GET() {
       totalScreens,
       totalPublishers,
       recentInteractions,
+      // Use SQL AVG() – avoids loading every row into Node.js
+      avgLagResult,
+      // Single query for both clicked + displayed counts
+      clickedAndDisplayed,
     ] = await Promise.all([
       prisma.interactionEvent.count(),
       prisma.screen.count(),
@@ -16,71 +20,45 @@ export async function GET() {
         take: 20,
         orderBy: { timestamp: "desc" },
         include: {
-          screen: {
-            select: { name: true }
-          },
+          screen: { select: { name: true } },
         },
       }),
+      // Compute average lag entirely in Postgres – no row transfer
+      prisma.$queryRaw<{ avg_lag_ms: number | null }[]>`
+        SELECT AVG(
+          EXTRACT(EPOCH FROM ("displayedAt" - "clickedAt")) * 1000
+        ) AS avg_lag_ms
+        FROM "InteractionEvent"
+        WHERE "clickedAt" IS NOT NULL
+          AND "displayedAt" IS NOT NULL
+      `,
+      // Clicked + displayed in one pass via conditional COUNT
+      prisma.$queryRaw<{ clicked_count: bigint; displayed_count: bigint }[]>`
+        SELECT
+          COUNT(*) FILTER (WHERE "clickedAt" IS NOT NULL) AS clicked_count,
+          COUNT(*) FILTER (WHERE "clickedAt" IS NOT NULL AND "displayedAt" IS NOT NULL) AS displayed_count
+        FROM "InteractionEvent"
+      `,
     ]);
 
-    // Simple aggregation for "Heatmap" (Interactions by Screen)
-    const statsByScreen = await prisma.interactionEvent.groupBy({
-      by: ["screenId"],
-      _count: {
-        id: true,
-      },
-      orderBy: {
-        _count: {
-          id: "desc",
-        },
-      },
-      take: 5,
-    });
+    // Aggregation for "Heatmap" (Top 5 screens by interaction count)
+    // Join screen name in the same query to avoid a second round-trip
+    const screenStats = await prisma.$queryRaw<{ name: string; count: bigint }[]>`
+      SELECT s.name, COUNT(ie.id) AS count
+      FROM "InteractionEvent" ie
+      JOIN "Screen" s ON s.id = ie."screenId"
+      GROUP BY s.id, s.name
+      ORDER BY count DESC
+      LIMIT 5
+    `;
 
-    const screenDetails = await prisma.screen.findMany({
-      where: {
-        id: { in: statsByScreen.map((s) => s.screenId) },
-      },
-    });
+    const avgLag =
+      avgLagResult[0]?.avg_lag_ms != null
+        ? Math.round(Number(avgLagResult[0].avg_lag_ms))
+        : null;
 
-    const screenStats = statsByScreen.map((s) => ({
-      name: screenDetails.find((sd) => sd.id === s.screenId)?.name || "Unknown",
-      count: s._count.id,
-    }));
-
-    // Calculate global timing metrics
-    const interactionsWithTiming = await prisma.interactionEvent.findMany({
-      where: {
-        clickedAt: { not: null },
-        displayedAt: { not: null },
-      },
-      select: {
-        clickedAt: true,
-        displayedAt: true,
-      },
-    });
-
-    let avgLag = null;
-    if (interactionsWithTiming.length > 0) {
-      const totalLag = interactionsWithTiming.reduce((sum, event) => {
-        const lag = new Date(event.displayedAt!).getTime() - new Date(event.clickedAt!).getTime();
-        return sum + lag;
-      }, 0);
-      avgLag = Math.round(totalLag / interactionsWithTiming.length);
-    }
-
-    // Calculate global missed rate
-    const clickedCount = await prisma.interactionEvent.count({
-      where: { clickedAt: { not: null } },
-    });
-
-    const displayedCount = await prisma.interactionEvent.count({
-      where: {
-        clickedAt: { not: null },
-        displayedAt: { not: null },
-      },
-    });
-
+    const clickedCount = Number(clickedAndDisplayed[0]?.clicked_count ?? 0);
+    const displayedCount = Number(clickedAndDisplayed[0]?.displayed_count ?? 0);
     const missedCount = clickedCount - displayedCount;
     const missedRate = clickedCount > 0 ? (missedCount / clickedCount) * 100 : 0;
 
@@ -89,7 +67,7 @@ export async function GET() {
       totalScreens,
       totalPublishers,
       recentInteractions,
-      screenStats,
+      screenStats: screenStats.map((s) => ({ name: s.name, count: Number(s.count) })),
       avgLag, // in milliseconds
       missedRate, // percentage
       missedCount,

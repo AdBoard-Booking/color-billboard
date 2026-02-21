@@ -351,7 +351,7 @@ export default function ScreenDetailsPage() {
                       <p className="text-sm font-black uppercase tracking-tight">{event.userName || "Anonymous"}</p>
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: event.color }} />
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{new Date(event.timestamp).toLocaleTimeString()}</p>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{new Date(event.timestamp).toLocaleDateString()} · {new Date(event.timestamp).toLocaleTimeString()}</p>
                         {isMissed && (
                           <>
                             <div className="w-1 h-1 bg-red-300 rounded-full" />
@@ -371,9 +371,7 @@ export default function ScreenDetailsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest group-hover:text-zinc-500 transition-colors">
-                    {event.deviceHash?.substring(0, 8)}...
-                  </div>
+
                 </div>
               );
             })}
