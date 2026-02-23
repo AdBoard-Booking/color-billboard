@@ -18,6 +18,8 @@ export default function MobileThrowPage() {
   const [selectedColor, setSelectedColor] = useState(COLORS[0].hex);
   const [userName, setUserName] = useState("");
   const [showNameModal, setShowNameModal] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [isValidatingName, setIsValidatingName] = useState(false);
   const [status, setStatus] = useState<"idle" | "throwing" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [reward, setReward] = useState<{ message: string; coupon: string | null } | null>(null);
@@ -47,9 +49,30 @@ export default function MobileThrowPage() {
     }
   }, [showNameModal]);
 
-  const saveName = (e: React.FormEvent) => {
+  const saveName = async (e: React.FormEvent) => {
     e.preventDefault();
     if (userName.trim()) {
+      setNameError("");
+      setIsValidatingName(true);
+
+      try {
+        const res = await fetch("/api/validate-name", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: userName.trim() }),
+        });
+        const data = await res.json();
+
+        if (res.ok && !data.isValid) {
+          setNameError(data.reason || "Invalid name.");
+          setIsValidatingName(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Name validation error:", err);
+      }
+
+      setIsValidatingName(false);
       localStorage.setItem("user_name", userName);
       posthog.identify(userName);
       posthog.capture('name_submitted', { name: userName });
@@ -310,8 +333,11 @@ export default function MobileThrowPage() {
               <p className="text-[#0060FF] text-xs font-black uppercase tracking-[0.3em] mb-4 text-center">Identity Setup</p>
               <h2 className="text-5xl font-[900] mb-8 tracking-tighter text-zinc-900 text-center leading-none">Who are<br />you?</h2>
               <form onSubmit={saveName} className="space-y-4">
-                <input autoFocus type="text" placeholder="Your display name" value={userName} onChange={(e) => setUserName(e.target.value)} className="w-full bg-white border border-zinc-100 shadow-xl rounded-[32px] py-6 px-10 text-xl font-bold focus:ring-4 focus:ring-[#0060FF]/10 transition-all outline-none text-center" />
-                <button type="submit" disabled={!userName.trim()} className="w-full bg-[#0060FF] text-white font-black py-6 rounded-[32px] shadow-2xl shadow-[#0060FF]/30 disabled:opacity-50 text-xl tracking-tight">START SPLASHING</button>
+                <input autoFocus type="text" placeholder="Your display name" value={userName} onChange={(e) => { setUserName(e.target.value); setNameError(""); }} className={`w-full bg-white border ${nameError ? "border-red-500" : "border-zinc-100"} shadow-xl rounded-[32px] py-6 px-10 text-xl font-bold focus:ring-4 focus:ring-[#0060FF]/10 transition-all outline-none text-center`} />
+                {nameError && <p className="text-red-500 text-sm font-bold text-center mt-2">{nameError}</p>}
+                <button type="submit" disabled={!userName.trim() || isValidatingName} className="w-full bg-[#0060FF] text-white font-black py-6 rounded-[32px] shadow-2xl shadow-[#0060FF]/30 disabled:opacity-50 text-xl tracking-tight">
+                  {isValidatingName ? "VALIDATING..." : "START SPLASHING"}
+                </button>
               </form>
             </motion.div>
           </motion.div>
