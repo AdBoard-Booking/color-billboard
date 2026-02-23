@@ -33,7 +33,8 @@ export default function ScreenDetailsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
-    location: ""
+    location: "",
+    allowMockSplash: true
   });
   const [saving, setSaving] = useState(false);
 
@@ -44,7 +45,8 @@ export default function ScreenDetailsPage() {
         setScreen(data);
         setEditForm({
           name: data.name,
-          location: data.location || ""
+          location: data.location || "",
+          allowMockSplash: data.allowMockSplash ?? true
         });
         setLoading(false);
       })
@@ -165,6 +167,18 @@ export default function ScreenDetailsPage() {
                     className="bg-transparent outline-none w-full font-medium text-zinc-600"
                     placeholder="Location"
                   />
+                </div>
+                <div className="flex items-center gap-3 bg-zinc-50 border border-zinc-100 rounded-xl p-3">
+                  <input
+                    type="checkbox"
+                    id="allowMockSplash"
+                    checked={editForm.allowMockSplash}
+                    onChange={(e) => setEditForm({ ...editForm, allowMockSplash: e.target.checked })}
+                    className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                  />
+                  <label htmlFor="allowMockSplash" className="text-zinc-700 font-bold uppercase text-xs tracking-tight cursor-pointer">
+                    Enable Mock Splashes (Simulate throws when idle)
+                  </label>
                 </div>
               </div>
             </div>

@@ -31,13 +31,14 @@ model Publisher {
 }
 
 model Screen {
-  id           String             @id @default(uuid())
-  name         String
-  location     String?
-  publisherId  String
-  publisher    Publisher          @relation(fields: [publisherId], references: [id])
-  interactions InteractionEvent[]
-  createdAt    DateTime           @default(now())
+  id              String             @id @default(uuid())
+  name            String
+  location        String?
+  publisherId     String
+  allowMockSplash Boolean            @default(true)
+  publisher       Publisher          @relation(fields: [publisherId], references: [id])
+  interactions    InteractionEvent[]
+  createdAt       DateTime           @default(now())
 
   @@index([publisherId])
 }

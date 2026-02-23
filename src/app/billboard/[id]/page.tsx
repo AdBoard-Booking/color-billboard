@@ -27,6 +27,7 @@ export default function BillboardPage() {
   const [publisherName, setPublisherName] = useState("");
   const socketRef = useRef<Socket | null>(null);
   const lastInteractionRef = useRef<number>(Date.now());
+  const mockSplashEnabled = useRef<boolean>(true);
 
   const createSplash = (data: { color: string; userName: string; interactionId?: string }) => {
     const centerX = Math.random() * 80 + 10;
@@ -81,6 +82,8 @@ export default function BillboardPage() {
 
     // Interval for dummy splashes
     const dummyInterval = setInterval(() => {
+      if (!mockSplashEnabled.current) return;
+
       const timeSinceLast = Date.now() - lastInteractionRef.current;
       if (timeSinceLast >= IDLE_TIME_BEFORE_DUMMY_MS) {
         setSplashes((prev) => {
@@ -142,6 +145,9 @@ export default function BillboardPage() {
         .then((data) => {
           if (data.publisher?.name) {
             setPublisherName(data.publisher.name);
+          }
+          if (typeof data.allowMockSplash === "boolean") {
+            mockSplashEnabled.current = data.allowMockSplash;
           }
         })
         .catch((err) => console.error("Error fetching screen details:", err));

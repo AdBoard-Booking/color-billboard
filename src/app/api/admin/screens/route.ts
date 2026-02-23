@@ -24,7 +24,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, location, publisherId } = body;
+    const { id, name, location, publisherId, allowMockSplash } = body;
 
     if (!name || !publisherId) {
       return NextResponse.json(
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         name,
         location,
         publisherId,
+        allowMockSplash: allowMockSplash ?? true,
       },
       include: {
         publisher: true,

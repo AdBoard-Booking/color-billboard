@@ -16,6 +16,7 @@ export default function AddScreenPage() {
     name: "",
     location: "",
     publisherId: "",
+    allowMockSplash: true,
   });
 
   useEffect(() => {
@@ -142,6 +143,24 @@ export default function AddScreenPage() {
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-zinc-400 text-[10px] font-bold uppercase mb-3 tracking-[0.2em] ml-1">
+                  <Sparkles size={12} /> Enable Mock Splashes
+                </label>
+                <div className="flex items-center gap-3 bg-zinc-50 border border-zinc-100 rounded-2xl py-5 px-8">
+                  <input
+                    type="checkbox"
+                    id="allowMockSplash"
+                    checked={formData.allowMockSplash}
+                    onChange={(e) => setFormData({ ...formData, allowMockSplash: e.target.checked })}
+                    className="w-5 h-5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                  />
+                  <label htmlFor="allowMockSplash" className="text-zinc-700 font-bold uppercase text-xs tracking-tight cursor-pointer">
+                    Simulate random color throws on this screen when idle
+                  </label>
+                </div>
               </div>
             </div>
 

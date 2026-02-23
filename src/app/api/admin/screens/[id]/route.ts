@@ -87,13 +87,14 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, location } = body;
+    const { name, location, allowMockSplash } = body;
 
     const screen = await prisma.screen.update({
       where: { id },
       data: {
         name,
         location,
+        ...(allowMockSplash !== undefined && { allowMockSplash }),
       },
     });
 
