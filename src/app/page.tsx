@@ -28,17 +28,12 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/holi_billboard_hero_1771306470035.png"
-            fill
-            alt="Holi Billboard Hero"
-            className="object-cover brightness-[0.85]"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white" />
+      <section className="relative min-h-[95vh] pt-32 pb-20 flex items-center justify-center overflow-hidden bg-white">
+        {/* Professional Subtle Background Elements */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#0060FF]/5 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#FF00FF]/5 rounded-full blur-[120px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
         </div>
 
         <div className="relative z-10 container mx-auto px-6 text-center">
@@ -47,27 +42,43 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <p className="text-[#0060FF] text-sm md:text-base font-black uppercase tracking-[0.4em] mb-4 drop-shadow-sm">World's First Interactive OOH</p>
+            <p className="text-[#0060FF] text-sm md:text-base font-black uppercase tracking-[0.4em] mb-4 drop-shadow-sm">For Billboard Owners</p>
             <h1 className="text-6xl md:text-9xl font-[900] tracking-tighter leading-[0.85] mb-8 italic">
-              <span className="holi-gradient-text">PAINT</span> THE <br />
-              <span className="text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]">CITY</span>
+              <span className="holi-gradient-text">ENGAGE</span> THE <br />
+              <span className="text-zinc-900 drop-shadow-sm">CROWD</span>
             </h1>
-            <p className="max-w-2xl mx-auto text-lg md:text-xl font-medium text-zinc-800 mb-10 leading-relaxed bg-white/30 backdrop-blur-md p-4 rounded-2xl border border-white/40">
-              The celebration is no longer just on the streets. Take over giant digital billboards across the city and splash your vibe in real-time.
+            <p className="max-w-2xl mx-auto text-lg md:text-xl font-medium text-zinc-600 mb-10 leading-relaxed">
+              Transform your static screens into real-time interactive experiences. Let your audience throw colors and messages directly onto your digital billboards.
             </p>
+
+            {/* How to setup */}
+            <div className="max-w-3xl mx-auto mb-10 bg-white border border-zinc-200 text-left shadow-2xl shadow-zinc-200/50 p-8 rounded-[32px] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#0060FF]/10 to-[#FF00FF]/10 blur-2xl -mr-10 -mt-10" />
+              <h3 className="font-bold text-xl mb-4 flex items-center gap-2 text-zinc-900 relative z-10">
+                <Zap className="w-5 h-5 text-[#0060FF]" /> Getting Started is Easy:
+              </h3>
+              <ol className="list-decimal list-inside space-y-3 text-zinc-600 font-medium relative z-10">
+                <li><strong className="text-zinc-900">Register</strong> by providing your company name, screen name, and city location.</li>
+                <li><strong className="text-[#0060FF]">Get a unique URL</strong> from us. Add this URL to your CMS or use it as a creative on your billboard. <span className="text-xs ml-2 bg-zinc-100 px-2 py-1 rounded inline-block mt-1 sm:mt-0">(Every modern digital billboard supports webpages!)</span></li>
+                <li><strong className="text-zinc-900">Test the creative</strong> by scanning the QR code that appears on your billboard.</li>
+                <li><strong className="text-[#FF00FF]">Enjoy</strong> real-time interactive engagement from the crowd!</li>
+              </ol>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => window.open("https://wa.me/919310854859?text=Hi, I would like to register my billboard for the interactive campaign.", "_blank")}
+                className="w-full sm:w-auto bg-white text-zinc-900 px-8 py-4 rounded-full text-lg font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-3 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+              >
+                Register Screen <ArrowRight className="w-5 h-5 text-zinc-400" />
+              </button>
               <Link
-                href="/throw/screen_1"
-                className="w-full sm:w-auto bg-[#0060FF] text-white px-10 py-5 rounded-full text-lg font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shadow-2xl shadow-[#0060FF]/40 flex items-center justify-center gap-3 group"
+                href="/billboard/screen_1"
+                target="_blank"
+                className="w-full sm:w-auto bg-[#0060FF] text-white px-8 py-4 rounded-full text-lg font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-[#0060FF]/40 flex items-center justify-center gap-3 group"
               >
-                Launch App <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Test Demo View <Zap className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </Link>
-              <a
-                href="#how-it-works"
-                className="w-full sm:w-auto bg-white/80 backdrop-blur-md text-zinc-900 border border-white px-10 py-5 rounded-full text-lg font-black uppercase tracking-widest hover:bg-white transition-all shadow-xl"
-              >
-                See it in Action
-              </a>
             </div>
           </motion.div>
         </div>
@@ -76,9 +87,9 @@ export default function Home() {
         <motion.div
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 hidden md:block"
         >
-          <div className="w-1 h-12 rounded-full bg-gradient-to-b from-white to-[#0060FF]/50" />
+          <div className="w-1 h-12 rounded-full bg-gradient-to-b from-zinc-200 to-transparent" />
         </motion.div>
       </section>
 
@@ -94,18 +105,18 @@ export default function Home() {
             {[
               {
                 icon: <MapPin className="w-8 h-8 text-[#0060FF]" />,
-                title: "Find a Screen",
-                desc: "Spot one of our interactive billboards across major city squares and high-traffic points."
+                title: "Register Details",
+                desc: "Provide us with your company name, screen name, and location to register your screens."
               },
               {
                 icon: <Zap className="w-8 h-8 text-[#FF00FF]" />,
-                title: "Connect Instantly",
-                desc: "Scan the QR code on the screen or use this site to instantly link your device to the billboard."
+                title: "Use Webpage URL",
+                desc: "Receive a unique URL from us. Set this webpage URL as the creative asset on your screen's CMS."
               },
               {
                 icon: <Paintbrush className="w-8 h-8 text-orange-500" />,
-                title: "Splash Your Color",
-                desc: "Choose your favorite Holi shade and tap to splash it. Watch it explode on the big screen in milliseconds."
+                title: "Scan & Enjoy",
+                desc: "Your screen is now interactive! Test the creative by scanning the QR on your billboard, and watch the magic happen."
               }
             ].map((step, i) => (
               <motion.div
